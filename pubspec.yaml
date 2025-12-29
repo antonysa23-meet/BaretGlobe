@@ -1,0 +1,75 @@
+name: baret_scholars_globe
+description: A cross-platform location tracking app for Baret Scholars alumni with 3D globe visualization.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State Management
+  flutter_riverpod: ^2.4.0
+  riverpod_annotation: ^2.3.0
+
+  # Backend
+  supabase_flutter: ^2.0.0
+
+  # Authentication
+  google_sign_in: ^6.2.1
+
+  # Location Services
+  geolocator: ^10.1.0
+  geocoding: ^2.1.1
+  permission_handler: ^11.0.1
+  flutter_background_service: ^5.0.5
+  flutter_local_notifications: ^17.0.0
+
+  # 3D Globe Visualization (using flutter_map for now - we'll add 3D later)
+  flutter_map: ^6.0.0
+  latlong2: ^0.9.0
+  # flutter_gl: ^0.0.29  # Temporarily commented - will add custom 3D solution
+  # three_dart: ^0.0.16  # Temporarily commented - will add custom 3D solution
+
+  # Background Location - temporarily disabled due to compatibility issues
+  # background_location: ^0.13.0
+  # workmanager: ^0.5.1  # Disabled due to compatibility issues - using flutter_background_service instead
+
+  # UI/UX
+  google_fonts: ^6.1.0
+  cached_network_image: ^3.3.0
+  shimmer: ^3.0.0
+
+  # Utilities
+  freezed_annotation: ^2.4.1
+  json_annotation: ^4.8.1
+  intl: ^0.18.1
+  uuid: ^4.2.2
+  device_info_plus: ^9.1.0
+  shared_preferences: ^2.2.2
+  package_info_plus: ^4.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Code Generation
+  build_runner: ^2.4.6
+  freezed: ^2.4.5
+  json_serializable: ^6.7.1
+  riverpod_generator: ^2.3.0
+
+  # Linting
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/images/earth_texturejpg.png
+
+  # fonts:
+  # Using Google Fonts package instead - no need to download font files!
