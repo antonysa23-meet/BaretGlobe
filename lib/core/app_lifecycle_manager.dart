@@ -5,7 +5,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../features/globe/data/repositories/location_repository.dart';
 import '../features/settings/data/repositories/settings_repository.dart';
 import '../features/settings/presentation/providers/settings_provider.dart';
-import 'services/background_location_service.dart';
 
 /// Manages app lifecycle to start/stop location tracking based on database settings
 class AppLifecycleManager extends StatefulWidget {
@@ -70,7 +69,8 @@ class _AppLifecycleManagerState extends State<AppLifecycleManager>
       final alumnus = await locationRepo.getAlumnusByAuthUserId(authUser.id);
 
       if (alumnus == null) {
-        print('⚠️ AppLifecycle: No alumnus found for auth user ${authUser.id}, skipping tracking');
+        print(
+            '⚠️ AppLifecycle: No alumnus found for auth user ${authUser.id}, skipping tracking');
         return;
       }
       print('✅ AppLifecycle: Alumnus found: ${alumnus.id} (${alumnus.name})');
@@ -90,17 +90,21 @@ class _AppLifecycleManagerState extends State<AppLifecycleManager>
       }
 
       print('📊 AppLifecycle: User preferences from database:');
-      print('   - location_tracking_enabled: ${userPrefs.locationTrackingEnabled}');
-      print('   - location_tracking_frequency: ${userPrefs.locationTrackingFrequency}');
+      print(
+          '   - location_tracking_enabled: ${userPrefs.locationTrackingEnabled}');
+      print(
+          '   - location_tracking_frequency: ${userPrefs.locationTrackingFrequency}');
       print('   - notifications_enabled: ${userPrefs.notificationsEnabled}');
 
       if (userPrefs.locationTrackingEnabled == true) {
-        print('🔵 AppLifecycle: Location tracking enabled in database, starting services...');
+        print(
+            '🔵 AppLifecycle: Location tracking enabled in database, starting services...');
 
         final container = ProviderScope.containerOf(context, listen: false);
 
         // Start background service (runs continuously even when app is closed)
-        final backgroundService = container.read(backgroundLocationServiceProvider);
+        final backgroundService =
+            container.read(backgroundLocationServiceProvider);
         final isRunning = await backgroundService.isRunning();
         if (!isRunning) {
           await backgroundService.enable();
@@ -110,11 +114,13 @@ class _AppLifecycleManagerState extends State<AppLifecycleManager>
         }
 
         // Start foreground tracking (more frequent updates while app is open)
-        final foregroundService = container.read(foregroundLocationServiceProvider);
+        final foregroundService =
+            container.read(foregroundLocationServiceProvider);
         await foregroundService.startTracking();
         print('✅ AppLifecycle: Foreground tracking started');
       } else {
-        print('⚠️ AppLifecycle: Location tracking disabled in database (locationTrackingEnabled = ${userPrefs.locationTrackingEnabled}), skipping');
+        print(
+            '⚠️ AppLifecycle: Location tracking disabled in database (locationTrackingEnabled = ${userPrefs.locationTrackingEnabled}), skipping');
       }
     } catch (error, stackTrace) {
       print('❌ AppLifecycle: Error starting tracking - $error');
@@ -128,11 +134,13 @@ class _AppLifecycleManagerState extends State<AppLifecycleManager>
 
       // Get the foreground location service
       final container = ProviderScope.containerOf(context, listen: false);
-      final foregroundService = container.read(foregroundLocationServiceProvider);
+      final foregroundService =
+          container.read(foregroundLocationServiceProvider);
 
       foregroundService.stopTracking();
 
-      print('✅ AppLifecycle: Foreground tracking stopped (background continues)');
+      print(
+          '✅ AppLifecycle: Foreground tracking stopped (background continues)');
     } catch (error) {
       print('❌ AppLifecycle: Error stopping foreground tracking - $error');
     }

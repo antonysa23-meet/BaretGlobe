@@ -4,7 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../core/constants/app_colors.dart';
 import '../domain/models/location.dart';
+import '../../messaging/presentation/providers/messaging_provider.dart';
+import '../../messaging/presentation/screens/chat_screen.dart';
+import '../../auth/presentation/providers/auth_provider.dart';
 import 'providers/globe_provider.dart';
+import 'widgets/baret_profile_avatar.dart';
 
 /// Main globe screen showing alumni locations on a map
 class GlobeScreen extends ConsumerStatefulWidget {
@@ -26,6 +30,10 @@ class _GlobeScreenState extends ConsumerState<GlobeScreen>
   DateTime _lastZoomTime = DateTime.now();
   double _previousZoom = 1.2;
   LatLng? _previousCenter;
+
+  // Track map tile loading state
+  bool _isMapLoading = true;
+  bool _hasMapError = false;
 
   @override
   void initState() {
@@ -52,6 +60,25 @@ class _GlobeScreenState extends ConsumerState<GlobeScreen>
           _mapController.move(currentCenter, currentZoom);
         }
       });
+
+    // Hide loading overlay after a timeout (assume map loaded)
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _isMapLoading = false;
+        });
+      }
+    });
+
+    // Set error state after extended timeout if still loading
+    Future.delayed(const Duration(seconds: 10), () {
+      if (mounted && _isMapLoading) {
+        setState(() {
+          _isMapLoading = false;
+          _hasMapError = true;
+        });
+      }
+    });
   }
 
   @override
@@ -66,21 +93,20 @@ class _GlobeScreenState extends ConsumerState<GlobeScreen>
     final locationsAsync = ref.watch(currentLocationsProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Baret Scholars Globe'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.my_location),
-            onPressed: () => _centerOnAllLocations(locationsAsync.value ?? []),
-            tooltip: 'View all locations',
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(80),
+        child: AppBar(
+          title: Padding(
+            padding: const EdgeInsets.all(5),
+            child: Image.asset(
+              'assets/images/Baret.png',
+              height: 50,
+              fit: BoxFit.contain,
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.refresh(currentLocationsProvider),
-            tooltip: 'Refresh locations',
-          ),
-        ],
+          centerTitle: true,
+          toolbarHeight: 80,
+        ),
       ),
       body: locationsAsync.when(
         loading: () => const Center(
@@ -111,125 +137,236 @@ class _GlobeScreenState extends ConsumerState<GlobeScreen>
   }
 
   Widget _buildMap(BuildContext context, List<AlumnusLocation> locations) {
-    return FlutterMap(
-      mapController: _mapController,
-      options: MapOptions(
-        initialCenter: const LatLng(0.0, 0.0), // Center of world
-        initialZoom: 1.2, // Zoomed out to see full globe
-        minZoom: 1.5, // Allow zooming out more
-        maxZoom: 10.0, // Increased max zoom for better detail
-        // No camera constraint - enables infinite horizontal scrolling
-        interactionOptions: const InteractionOptions(
-          flags: InteractiveFlag.all,
-          enableMultiFingerGestureRace: true,
-          // Improved pinch-zoom settings
-          pinchMoveThreshold: 20.0, // Lower = more responsive zoom centering
-          pinchZoomThreshold: 0.3, // More sensitive zoom detection
-          scrollWheelVelocity: 0.005,
-        ),
-        backgroundColor: Colors.transparent,
-        onPositionChanged: (position, hasGesture) {
-          final newZoom = position.zoom ?? 1.2;
-          final newCenter = position.center;
-          final now = DateTime.now();
-          final timeDiff = now.difference(_lastZoomTime).inMilliseconds;
-
-          // Check if user is panning (map center is moving)
-          bool isPanning = false;
-          if (_previousCenter != null && newCenter != null) {
-            final distance = _calculateDistance(_previousCenter!, newCenter);
-            // If center moved more than 0.01 degrees, user is panning
-            isPanning = distance > 0.01;
-          }
-
-          // Calculate zoom velocity only if not panning significantly
-          if (timeDiff > 0 && hasGesture && !isPanning) {
-            _lastZoomVelocity = (newZoom - _previousZoom) / timeDiff * 1000;
-            _lastZoomTime = now;
-            _previousZoom = newZoom;
-          } else if (isPanning) {
-            // Reset velocity if panning detected
-            _lastZoomVelocity = 0.0;
-          }
-
-          // Update previous center
-          _previousCenter = newCenter;
-
-          // When gesture ends, apply momentum only if there's significant velocity
-          if (!hasGesture && _lastZoomVelocity.abs() > 0.01) {
-            _applyZoomMomentum(newZoom, _lastZoomVelocity);
-            _lastZoomVelocity = 0.0;
-          }
-
-          setState(() {
-            _currentZoom = newZoom;
-          });
-        },
-      ),
+    return Stack(
       children: [
-        // Single tile layer for 100% clarity
-        TileLayer(
-          // urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          urlTemplate:
-              'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
-          // 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-          // 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/rastertiles/voyager/{z}/{x}/{y}.png',
-          // 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
-          // 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
+        FlutterMap(
+          mapController: _mapController,
+          options: MapOptions(
+            initialCenter: const LatLng(0.0, 0.0), // Center of world
+            initialZoom: 1.5, // Zoomed out to see full globe
+            minZoom: 1.5, // Allow zooming out more
+            maxZoom: 10.0, // Increased max zoom for better detail
+            // Constrain latitude to prevent vertical scrolling beyond map bounds
+            cameraConstraint: CameraConstraint.contain(
+              bounds: LatLngBounds(
+                const LatLng(-85.0, -180.0), // Southwest corner
+                const LatLng(85.0, 180.0), // Northeast corner
+              ),
+            ),
+            interactionOptions: const InteractionOptions(
+              flags: InteractiveFlag.all,
+              enableMultiFingerGestureRace: true,
+              // Improved pinch-zoom settings
+              pinchMoveThreshold:
+                  20.0, // Lower = more responsive zoom centering
+              pinchZoomThreshold: 0.3, // More sensitive zoom detection
+              scrollWheelVelocity: 0.005,
+            ),
+            backgroundColor: Colors.transparent,
+            onPositionChanged: (position, hasGesture) {
+              final newZoom = position.zoom ?? 1.2;
+              final newCenter = position.center;
+              final now = DateTime.now();
+              final timeDiff = now.difference(_lastZoomTime).inMilliseconds;
 
-          userAgentPackageName: 'com.baret.scholars_globe',
-          tileDisplay: const TileDisplay.instantaneous(),
+              // Check if user is panning (map center is moving)
+              bool isPanning = false;
+              if (_previousCenter != null && newCenter != null) {
+                final distance =
+                    _calculateDistance(_previousCenter!, newCenter);
+                // If center moved more than 0.01 degrees, user is panning
+                isPanning = distance > 0.01;
+              }
+
+              // Calculate zoom velocity only if not panning significantly
+              if (timeDiff > 0 && hasGesture && !isPanning) {
+                _lastZoomVelocity = (newZoom - _previousZoom) / timeDiff * 1000;
+                _lastZoomTime = now;
+                _previousZoom = newZoom;
+              } else if (isPanning) {
+                // Reset velocity if panning detected
+                _lastZoomVelocity = 0.0;
+              }
+
+              // Update previous center
+              _previousCenter = newCenter;
+
+              // When gesture ends, apply momentum only if there's significant velocity
+              if (!hasGesture && _lastZoomVelocity.abs() > 0.01) {
+                _applyZoomMomentum(newZoom, _lastZoomVelocity);
+                _lastZoomVelocity = 0.0;
+              }
+
+              setState(() {
+                _currentZoom = newZoom;
+              });
+            },
+          ),
+          children: [
+            // Single tile layer for 100% clarity
+            TileLayer(
+              // urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              urlTemplate:
+                  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+              // 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+              // 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/rastertiles/voyager/{z}/{x}/{y}.png',
+              // 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+              // 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
+
+              userAgentPackageName: 'com.baret.scholars_globe',
+              tileDisplay: const TileDisplay.instantaneous(),
+              errorImage: const NetworkImage(
+                  'https://via.placeholder.com/256x256.png?text=Loading'),
+              tileProvider: NetworkTileProvider(
+                headers: {
+                  'User-Agent': 'com.baret.scholars_globe',
+                },
+              ),
+            ),
+
+            // Location markers with clustering
+            MarkerLayer(
+              markers: _buildClusteredMarkers(context, locations),
+            ),
+          ],
         ),
 
-        // Location markers with clustering
-        MarkerLayer(
-          markers: _buildClusteredMarkers(context, locations),
-        ),
+        // Loading overlay for initial map load
+        if (_isMapLoading)
+          Container(
+            color: Colors.white.withValues(alpha: 0.9),
+            child: const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text(
+                    'Loading map...',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: AppColors.textGray,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+        // Error overlay if map fails to load
+        if (_hasMapError)
+          Container(
+            color: Colors.white.withValues(alpha: 0.95),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: AppColors.error,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Map failed to load',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Check your internet connection',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textGray,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _hasMapError = false;
+                        _isMapLoading = true;
+                      });
+                      // Trigger a map reload and reset timeout
+                      ref.invalidate(currentLocationsProvider);
+                      Future.delayed(const Duration(seconds: 3), () {
+                        if (mounted) {
+                          setState(() {
+                            _isMapLoading = false;
+                          });
+                        }
+                      });
+                    },
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryBlue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
       ],
     );
   }
 
   Widget _buildBottomBar(
       BuildContext context, List<AlumnusLocation> locations) {
+    // Calculate unique alumni count (deduplicated)
+    final uniqueAlumni = <String>{};
+    for (final alumnusLoc in locations) {
+      final key =
+          '${alumnusLoc.alumnus.name}_${alumnusLoc.alumnus.cohortYear}_${alumnusLoc.location.latitude.toStringAsFixed(6)}_${alumnusLoc.location.longitude.toStringAsFixed(6)}';
+      uniqueAlumni.add(key);
+    }
+    final uniqueCount = uniqueAlumni.length;
+
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '$uniqueCount Alumni Worldwide',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  '${locations.length} Alumni Worldwide',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                IconButton(
+                  icon: const Icon(Icons.my_location),
+                  onPressed: () => _centerOnAllLocations(locations),
+                  tooltip: 'View all locations',
+                  color: AppColors.accentGold,
                 ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Tap markers to see details',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textGray,
-                  ),
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: () => ref.refresh(currentLocationsProvider),
+                  tooltip: 'Refresh locations',
+                  color: AppColors.accentGold,
                 ),
               ],
-            ),
-            ElevatedButton.icon(
-              onPressed: () {
-                // TODO: Navigate to check-in screen
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Check-in screen coming soon!'),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.add_location),
-              label: const Text('Check In'),
             ),
           ],
         ),
@@ -240,9 +377,10 @@ class _GlobeScreenState extends ConsumerState<GlobeScreen>
   // Build clustered markers based on proximity and zoom level
   List<Marker> _buildClusteredMarkers(
       BuildContext context, List<AlumnusLocation> locations) {
-    // Convert AlumnusLocation to MarkerData
+    // Convert AlumnusLocation to MarkerData and remove duplicates
     final markerDataList = locations.map((alumnusLoc) {
       return MarkerData(
+        alumnusId: alumnusLoc.alumnus.id,
         name: alumnusLoc.alumnus.name,
         cohortYear: alumnusLoc.alumnus.cohortYear,
         location:
@@ -253,11 +391,26 @@ class _GlobeScreenState extends ConsumerState<GlobeScreen>
       );
     }).toList();
 
+    // Remove duplicates: same name, cohort, and location
+    final uniqueMarkers = <String, MarkerData>{};
+    for (final marker in markerDataList) {
+      final key =
+          '${marker.name}_${marker.cohortYear}_${marker.location.latitude.toStringAsFixed(6)}_${marker.location.longitude.toStringAsFixed(6)}';
+      // Keep the most recent entry if duplicate exists
+      if (!uniqueMarkers.containsKey(key) ||
+          (marker.updatedAt != null &&
+              uniqueMarkers[key]!.updatedAt != null &&
+              marker.updatedAt!.isAfter(uniqueMarkers[key]!.updatedAt!))) {
+        uniqueMarkers[key] = marker;
+      }
+    }
+    final deduplicatedList = uniqueMarkers.values.toList();
+
     final clusters = <String, List<MarkerData>>{};
     final clusterRadius = _getClusterRadius();
 
     // Group nearby locations
-    for (final data in markerDataList) {
+    for (final data in deduplicatedList) {
       bool addedToCluster = false;
 
       // Only cluster if radius > 0 (not at max zoom)
@@ -327,18 +480,22 @@ class _GlobeScreenState extends ConsumerState<GlobeScreen>
     // Adjust cluster radius based on zoom level
     // More zoom = smaller radius = less clustering
     // Refined thresholds for better separation as user zooms in
-    if (_currentZoom < 2)
+    if (_currentZoom < 2) {
       return 500.0; // World view - very aggressive clustering
+    }
     if (_currentZoom < 3) return 100.0; // Continental view
     if (_currentZoom < 4) return 20.0; // Multi-country view
-    if (_currentZoom < 5)
+    if (_currentZoom < 5) {
       return 5.0; // Country level - countries should separate here
+    }
     if (_currentZoom < 6) return 1.0; // Country zoom - cities start separating
-    if (_currentZoom < 7.5)
+    if (_currentZoom < 7.5) {
       return 0.5; // Regional view - nearby cities separate
+    }
     if (_currentZoom < 9) return 0.1; // City view - neighborhoods separate
-    if (_currentZoom < 9.8)
+    if (_currentZoom < 9.8) {
       return 0.01; // Close zoom - very close locations separate
+    }
     return 0.0; // Max zoom - fully separate (same exact location)
   }
 
@@ -352,26 +509,10 @@ class _GlobeScreenState extends ConsumerState<GlobeScreen>
   Widget _buildSingleMarker(MarkerData data) {
     final color = AppColors.getCohortColor(data.cohortYear);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.25),
-            blurRadius: 3,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: const Center(
-        child: Icon(
-          Icons.person,
-          color: Colors.white,
-          size: 18,
-        ),
-      ),
+    return BaretProfileAvatar(
+      name: data.name,
+      backgroundColor: color,
+      size: 32,
     );
   }
 
@@ -383,29 +524,11 @@ class _GlobeScreenState extends ConsumerState<GlobeScreen>
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        // Main profile marker
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 1.5),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.25),
-                blurRadius: 3,
-                offset: const Offset(0, 1),
-              ),
-            ],
-          ),
-          child: const Center(
-            child: Icon(
-              Icons.person,
-              color: Colors.white,
-              size: 20,
-            ),
-          ),
+        // Main profile marker with Baret design
+        BaretProfileAvatar(
+          name: firstPerson.name,
+          backgroundColor: color,
+          size: 36,
         ),
         // Badge in top right
         Positioned(
@@ -419,7 +542,7 @@ class _GlobeScreenState extends ConsumerState<GlobeScreen>
               border: Border.all(color: Colors.white, width: 1.5),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withValues(alpha: 0.3),
                   blurRadius: 2,
                   offset: const Offset(0, 1),
                 ),
@@ -500,18 +623,11 @@ class _GlobeScreenState extends ConsumerState<GlobeScreen>
                       ? ' • ${_formatRelativeTime(data.updatedAt!)}'
                       : '';
                   return ListTile(
-                    leading: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: AppColors.getCohortColor(data.cohortYear),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.person,
-                        color: Colors.white,
-                        size: 20,
-                      ),
+                    leading: BaretProfileAvatar(
+                      name: data.name,
+                      backgroundColor:
+                          AppColors.getCohortColor(data.cohortYear),
+                      size: 40,
                     ),
                     title: Text(data.name),
                     subtitle: Text(
@@ -541,18 +657,11 @@ class _GlobeScreenState extends ConsumerState<GlobeScreen>
           children: [
             Row(
               children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: AppColors.getCohortColor(data.cohortYear),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.person,
-                    color: Colors.white,
-                    size: 32,
-                  ),
+                BaretProfileAvatar(
+                  name: data.name,
+                  backgroundColor: AppColors.getCohortColor(data.cohortYear),
+                  size: 60,
+                  borderWidth: 2,
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -589,15 +698,110 @@ class _GlobeScreenState extends ConsumerState<GlobeScreen>
                 'Last updated ${_formatRelativeTime(data.updatedAt!)}',
               ),
             const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _mapController.move(data.location, 10.0);
-                },
-                child: const Text('Zoom to Location'),
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      Navigator.pop(context);
+
+                      // Get current user's alumnus ID
+                      final authState = ref.read(authStateProvider);
+                      final currentAlumnusId = authState.whenOrNull(
+                        data: (state) => state.maybeWhen(
+                          authenticated: (user, alumnusId) => alumnusId,
+                          orElse: () => null,
+                        ),
+                      );
+
+                      if (currentAlumnusId == null) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content:
+                                    Text('Please sign in to send messages')),
+                          );
+                        }
+                        return;
+                      }
+
+                      // Don't allow messaging yourself
+                      if (currentAlumnusId == data.alumnusId) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('You cannot message yourself')),
+                          );
+                        }
+                        return;
+                      }
+
+                      try {
+                        // Show loading
+                        if (context.mounted) {
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (context) => const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        }
+
+                        // Start conversation
+                        final conversationId = await ref
+                            .read(conversationActionsProvider.notifier)
+                            .startDirectMessage(data.alumnusId);
+
+                        if (context.mounted) {
+                          // Close loading
+                          Navigator.pop(context);
+
+                          // Navigate to chat
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ChatScreen(
+                                conversationId: conversationId,
+                                conversationName: data.name,
+                              ),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          // Close loading
+                          Navigator.pop(context);
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Failed to start conversation: $e'),
+                              backgroundColor: AppColors.error,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    icon: const Icon(Icons.message),
+                    label: const Text('Message'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _mapController.move(data.location, 10.0);
+                    },
+                    icon: const Icon(Icons.zoom_in),
+                    label: const Text('Zoom'),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -714,6 +918,7 @@ class _GlobeScreenState extends ConsumerState<GlobeScreen>
 
 /// Data class for marker information
 class MarkerData {
+  final String alumnusId;
   final String name;
   final int cohortYear;
   final LatLng location;
@@ -722,6 +927,7 @@ class MarkerData {
   final DateTime? updatedAt;
 
   MarkerData({
+    required this.alumnusId,
     required this.name,
     required this.cohortYear,
     required this.location,

@@ -135,6 +135,15 @@ class ForegroundLocationService {
 
       // Check for manual location override
       final prefs = await _settingsRepository.getUserPreferences(alumnus.id);
+
+      // Check for stale manual location fields (city/country set but no coordinates)
+      if (prefs != null &&
+          (prefs.manualLocationCity != null || prefs.manualLocationCountry != null) &&
+          (prefs.manualLocationLatitude == null || prefs.manualLocationLongitude == null)) {
+        print('🧹 ForegroundLocationService: Cleaning up stale manual location fields...');
+        await _settingsRepository.clearManualLocation(alumnus.id);
+      }
+
       if (prefs != null &&
           prefs.manualLocationLatitude != null &&
           prefs.manualLocationLongitude != null) {
@@ -171,7 +180,44 @@ class ForegroundLocationService {
         position.longitude,
       );
 
-      // Update location
+      // Smart N/A handling: Don't overwrite valid country with N/A
+      final bool isInvalidCountry = country == null ||
+          country == 'N/A' ||
+          country == 'Unknown' ||
+          country.isEmpty;
+
+      if (isInvalidCountry) {
+        // Get current location to check if it has a valid country
+        final currentLocation = await _locationRepository.getCurrentLocation(
+          alumnus.id,
+        );
+
+        if (currentLocation != null) {
+          final currentCountry = currentLocation.country;
+          final hasValidCurrentCountry = currentCountry != 'N/A' &&
+              currentCountry != 'Unknown' &&
+              currentCountry.isNotEmpty;
+
+          if (hasValidCurrentCountry) {
+            print('⏸️ ForegroundLocationService: Skipping N/A country update - keeping current: $currentCountry');
+            // Update location but keep the existing valid country
+            await _locationRepository.updateLocationWithFunction(
+              alumnusId: alumnus.id,
+              latitude: position.latitude,
+              longitude: position.longitude,
+              city: city,
+              country: currentCountry, // Keep the valid country
+              locationType: 'background',
+              notes: 'Automatic foreground update (country preserved)',
+            );
+            _lastPosition = position;
+            _lastUpdateTime = DateTime.now();
+            return;
+          }
+        }
+      }
+
+      // Update location with new country (or Unknown if geocoding failed)
       await _locationRepository.updateLocationWithFunction(
         alumnusId: alumnus.id,
         latitude: position.latitude,

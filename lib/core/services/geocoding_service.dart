@@ -64,22 +64,144 @@ class GeocodingService {
 
       final placemark = placemarks.first;
       final country = placemark.country;
+      final isoCode = placemark.isoCountryCode;
 
       print('🌍 GeocodingService: Country result for ($lat, $lng):');
       print('   - country: ${country ?? "NULL"}');
-      print('   - isoCountryCode: ${placemark.isoCountryCode ?? "NULL"}');
-      print(
-          '   - administrativeArea: ${placemark.administrativeArea ?? "NULL"}');
+      print('   - isoCountryCode: ${isoCode ?? "NULL"}');
+      print('   - administrativeArea: ${placemark.administrativeArea ?? "NULL"}');
+      print('   - locality: ${placemark.locality ?? "NULL"}');
 
-      // Return country if available, otherwise "N/A"
+      // Try multiple approaches to get country name
+      String? detectedCountry;
+
+      // 1. Use country field if available
       if (country != null && country.isNotEmpty) {
-        return country;
+        detectedCountry = country;
+      }
+      // 2. Fall back to ISO country code mapping
+      else if (isoCode != null && isoCode.isNotEmpty) {
+        detectedCountry = _getCountryNameFromIsoCode(isoCode);
+        if (detectedCountry != null) {
+          print('✅ GeocodingService: Mapped ISO code "$isoCode" to "$detectedCountry"');
+        }
+      }
+      // 3. Try administrativeArea as last resort for some regions
+      else if (placemark.administrativeArea != null &&
+               placemark.administrativeArea!.isNotEmpty) {
+        // Some geocoding APIs return country in administrativeArea
+        final admin = placemark.administrativeArea!;
+        // Only use if it looks like a country (short name, common patterns)
+        if (_looksLikeCountryName(admin)) {
+          detectedCountry = admin;
+          print('⚠️ GeocodingService: Using administrativeArea as country: "$admin"');
+        }
+      }
+
+      // Return detected country or "N/A"
+      if (detectedCountry != null && detectedCountry.isNotEmpty) {
+        return detectedCountry;
       }
 
       print('⚠️ GeocodingService: Country is null or empty, returning "N/A"');
       return 'N/A';
     } catch (error) {
       print('❌ GeocodingService: Error getting country - $error');
+      return null;
+    }
+  }
+
+  /// Map ISO country code to full country name
+  String? _getCountryNameFromIsoCode(String isoCode) {
+    // Common country code mappings
+    final countryMap = <String, String>{
+      'US': 'United States',
+      'GB': 'United Kingdom',
+      'CA': 'Canada',
+      'AU': 'Australia',
+      'NZ': 'New Zealand',
+      'IE': 'Ireland',
+      'ZA': 'South Africa',
+      'IN': 'India',
+      'PK': 'Pakistan',
+      'BD': 'Bangladesh',
+      'NG': 'Nigeria',
+      'KE': 'Kenya',
+      'IL': 'Israel',
+      'PS': 'Palestine',
+      'JO': 'Jordan',
+      'EG': 'Egypt',
+      'SA': 'Saudi Arabia',
+      'AE': 'United Arab Emirates',
+      'FR': 'France',
+      'DE': 'Germany',
+      'IT': 'Italy',
+      'ES': 'Spain',
+      'PT': 'Portugal',
+      'NL': 'Netherlands',
+      'BE': 'Belgium',
+      'CH': 'Switzerland',
+      'AT': 'Austria',
+      'PL': 'Poland',
+      'SE': 'Sweden',
+      'NO': 'Norway',
+      'DK': 'Denmark',
+      'FI': 'Finland',
+      'JP': 'Japan',
+      'CN': 'China',
+      'KR': 'South Korea',
+      'TH': 'Thailand',
+      'SG': 'Singapore',
+      'MY': 'Malaysia',
+      'ID': 'Indonesia',
+      'PH': 'Philippines',
+      'VN': 'Vietnam',
+      'BR': 'Brazil',
+      'AR': 'Argentina',
+      'MX': 'Mexico',
+      'CL': 'Chile',
+      'CO': 'Colombia',
+      'PE': 'Peru',
+    };
+
+    return countryMap[isoCode.toUpperCase()];
+  }
+
+  /// Check if a string looks like a country name
+  bool _looksLikeCountryName(String value) {
+    // Basic heuristic: short strings (< 30 chars) that don't contain numbers
+    return value.length < 30 && !value.contains(RegExp(r'\d'));
+  }
+
+  /// Forward geocoding: Convert city name to coordinates
+  ///
+  /// Returns a Map with 'latitude' and 'longitude' keys, or null if geocoding fails
+  Future<Map<String, double>?> getCoordinatesFromCity({
+    required String city,
+    required String country,
+  }) async {
+    try {
+      print('🔵 GeocodingService: Forward geocoding "$city, $country"...');
+
+      // Combine city and country for better accuracy
+      final query = '$city, $country';
+      final locations = await locationFromAddress(query);
+
+      if (locations.isEmpty) {
+        print('❌ GeocodingService: No coordinates found for "$query"');
+        return null;
+      }
+
+      final location = locations.first;
+      print(
+          '✅ GeocodingService: Found coordinates: (${location.latitude}, ${location.longitude})');
+
+      return {
+        'latitude': location.latitude,
+        'longitude': location.longitude,
+      };
+    } catch (error) {
+      print('❌ GeocodingService: Error forward geocoding - $error');
       return null;
     }
   }
@@ -103,7 +225,7 @@ class GeocodingService {
       if (timestamp == null) return null;
 
       final cacheDate = DateTime.fromMillisecondsSinceEpoch(timestamp);
-      final expiryDate = cacheDate.add(Duration(days: _cacheExpiryDays));
+      final expiryDate = cacheDate.add(const Duration(days: _cacheExpiryDays));
 
       if (DateTime.now().isAfter(expiryDate)) {
         // Cache expired, remove it

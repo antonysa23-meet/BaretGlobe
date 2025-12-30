@@ -15,8 +15,8 @@ class _CohortSelectionDialogState extends State<CohortSelectionDialog> {
   String? _selectedRegion;
 
   final List<int> _cohortYears = List.generate(
-    30,
-    (index) => DateTime.now().year - index,
+    35,
+    (index) => 2025 + index,
   );
 
   final List<String> _cohortRegions = [
@@ -36,7 +36,7 @@ class _CohortSelectionDialogState extends State<CohortSelectionDialog> {
     return WillPopScope(
       onWillPop: () async => false, // Prevent dismissing
       child: Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -44,49 +44,70 @@ class _CohortSelectionDialogState extends State<CohortSelectionDialog> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Header section - more compact
                 Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.school,
-                      color: AppColors.primaryBlue,
-                      size: 32,
+                      color: AppColors.accentGold,
+                      size: 28,
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Welcome to Baret Scholars!',
-                        style: AppTextStyles.h3,
+                        'Before we start',
+                        style: AppTextStyles.h4.copyWith(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 Text(
-                  'Please tell us about your cohort to complete your profile.',
-                  style: AppTextStyles.bodyMedium.copyWith(
+                  'Tell us about your cohort to connect with other scholars.',
+                  style: AppTextStyles.bodySmall.copyWith(
                     color: AppColors.textGray,
+                    fontSize: 13,
                   ),
                 ),
                 const SizedBox(height: 24),
 
                 // Cohort Year Selection
-                Text('Cohort Year', style: AppTextStyles.h4),
-                const SizedBox(height: 8),
+                Text(
+                  'Cohort Year',
+                  style: AppTextStyles.label.copyWith(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.black,
+                  ),
+                ),
+                const SizedBox(height: 6),
                 Container(
                   decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.textGray.withOpacity(0.3)),
+                    border:
+                        Border.all(color: AppColors.textGray.withOpacity(0.3)),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<int>(
                       isExpanded: true,
                       hint: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text('Select your cohort year'),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          'Select year',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            fontSize: 14,
+                          ),
+                        ),
                       ),
                       value: _selectedYear,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       borderRadius: BorderRadius.circular(8),
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        fontSize: 14,
+                      ),
                       items: _cohortYears.map((year) {
                         return DropdownMenuItem<int>(
                           value: year,
@@ -101,26 +122,42 @@ class _CohortSelectionDialogState extends State<CohortSelectionDialog> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 18),
 
                 // Cohort Region Selection
-                Text('Cohort Region', style: AppTextStyles.h4),
-                const SizedBox(height: 8),
+                Text(
+                  'Your Region',
+                  style: AppTextStyles.label.copyWith(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.black,
+                  ),
+                ),
+                const SizedBox(height: 6),
                 Container(
                   decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.textGray.withOpacity(0.3)),
+                    border:
+                        Border.all(color: AppColors.textGray.withOpacity(0.3)),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       isExpanded: true,
                       hint: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text('Select your region'),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          'Select region',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            fontSize: 14,
+                          ),
+                        ),
                       ),
                       value: _selectedRegion,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       borderRadius: BorderRadius.circular(8),
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        fontSize: 14,
+                      ),
                       items: _cohortRegions.map((region) {
                         return DropdownMenuItem<String>(
                           value: region,
@@ -135,28 +172,35 @@ class _CohortSelectionDialogState extends State<CohortSelectionDialog> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 20),
 
-                // Info box
+                // Info box - more compact
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.softGray,
-                    borderRadius: BorderRadius.circular(8),
+                    color: AppColors.accentGold.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: AppColors.accentGold.withOpacity(0.3),
+                      width: 1,
+                    ),
                   ),
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Icon(
                         Icons.info_outline,
-                        size: 20,
-                        color: AppColors.primaryBlue,
+                        size: 16,
+                        color: AppColors.accentGold.withOpacity(0.9),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'This helps connect you with other scholars from your cohort.',
-                          style: AppTextStyles.bodySmall.copyWith(
+                          'Your cohort information helps you discover and connect with other scholars.',
+                          style: AppTextStyles.caption.copyWith(
                             color: AppColors.textGray,
+                            fontSize: 11,
+                            height: 1.4,
                           ),
                         ),
                       ),
@@ -165,7 +209,7 @@ class _CohortSelectionDialogState extends State<CohortSelectionDialog> {
                 ),
                 const SizedBox(height: 24),
 
-                // Submit button
+                // Submit button - more compact
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -178,16 +222,21 @@ class _CohortSelectionDialogState extends State<CohortSelectionDialog> {
                           }
                         : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryBlue,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: AppColors.accentGold,
+                      foregroundColor: AppColors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(30),
                       ),
+                      disabledBackgroundColor: AppColors.neutralGray200,
+                      disabledForegroundColor: AppColors.neutralGray400,
                     ),
                     child: Text(
                       'Continue',
                       style: AppTextStyles.button.copyWith(
-                        color: Colors.white,
+                        color: AppColors.black,
+                        fontSize: 14,
+                        letterSpacing: 2.0,
                       ),
                     ),
                   ),

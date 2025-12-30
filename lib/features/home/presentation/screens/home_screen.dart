@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:motion_tab_bar/MotionTabBar.dart';
+import 'package:motion_tab_bar/MotionTabBarController.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/services/foreground_location_service.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../globe/presentation/globe_screen.dart';
-import '../../../messaging/presentation/screens/messaging_screen.dart';
+import '../../../messaging/presentation/screens/conversations_list_screen.dart';
 import '../../../settings/data/repositories/settings_repository.dart';
 import '../../../settings/presentation/screens/settings_screen.dart';
 import '../providers/navigation_provider.dart';
@@ -18,12 +20,28 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObserver {
-  final ForegroundLocationService _locationService = ForegroundLocationService();
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with WidgetsBindingObserver, TickerProviderStateMixin {
+  final ForegroundLocationService _locationService =
+      ForegroundLocationService();
+  MotionTabBarController? _motionTabBarController;
 
   @override
   void initState() {
     super.initState();
+    print('🏠 HomeScreen: initState - Setting navigation to Globe (index 1)');
+    // Ensure navigation provider is set to Globe on init
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final currentNav = ref.read(navigationProvider);
+      print('🏠 HomeScreen: Current navigation index before reset: $currentNav');
+      ref.read(navigationProvider.notifier).state = 1;
+      print('🏠 HomeScreen: Navigation index set to 1 (Globe)');
+    });
+    _motionTabBarController = MotionTabBarController(
+      initialIndex: 1, // Start at Globe screen
+      length: 3,
+      vsync: this,
+    );
     WidgetsBinding.instance.addObserver(this);
     _initializeLocationTracking();
   }
@@ -31,6 +49,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _motionTabBarController?.dispose();
     _locationService.dispose();
     super.dispose();
   }
@@ -72,7 +91,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
               final prefs = await settingsRepo.getUserPreferences(alumnusId);
 
               if (prefs?.locationTrackingEnabled == true) {
-                print('🔵 HomeScreen: Location tracking enabled - starting service');
+                print(
+                    '🔵 HomeScreen: Location tracking enabled - starting service');
                 await _locationService.startTracking();
               } else {
                 print('⏸️ HomeScreen: Location tracking disabled');
@@ -93,8 +113,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
   Widget build(BuildContext context) {
     final currentIndex = ref.watch(navigationProvider);
 
+    // Sync MotionTabBarController with navigation provider
+    if (_motionTabBarController != null &&
+        _motionTabBarController!.index != currentIndex) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _motionTabBarController?.index = currentIndex;
+      });
+    }
+
     final screens = [
-      const MessagingScreen(),
+      const ConversationsListScreen(),
       const GlobeScreen(),
       const SettingsScreen(),
     ];
@@ -104,27 +132,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
         index: currentIndex,
         children: screens,
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: currentIndex,
-        onTap: (index) {
-          ref.read(navigationProvider.notifier).state = index;
+      bottomNavigationBar: MotionTabBar(
+        controller: _motionTabBarController,
+        initialSelectedTab: "Globe",
+        useSafeArea: true,
+        labels: const ["Messages", "Globe", "Settings"],
+        icons: const [Icons.message, Icons.public, Icons.settings],
+        tabSize: 50,
+        tabBarHeight: 65,
+        textStyle: const TextStyle(
+          fontSize: 12,
+          color: AppColors.textGray,
+          fontWeight: FontWeight.w500,
+        ),
+        tabIconColor: AppColors.textGray,
+        tabIconSize: 28.0,
+        tabIconSelectedSize: 26.0,
+        tabSelectedColor: AppColors.accentGold,
+        tabIconSelectedColor: Colors.white,
+        tabBarColor: Colors.white,
+        onTabItemSelected: (int value) {
+          ref.read(navigationProvider.notifier).state = value;
         },
-        selectedItemColor: AppColors.primaryBlue,
-        unselectedItemColor: AppColors.textGray,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.message),
-            label: 'Messages',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.public),
-            label: 'Globe',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
-        ],
       ),
     );
   }

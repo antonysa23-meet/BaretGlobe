@@ -50,6 +50,11 @@ dependencies:
   device_info_plus: ^9.1.0
   shared_preferences: ^2.2.2
   package_info_plus: ^4.2.0
+  motion_tab_bar: ^2.0.4
+  glassmorphism: ^3.0.0
+  timeago: ^3.6.0
+  http: ^1.1.0
+  liquid_glass_renderer: ^0.2.0-dev.4
 
 dev_dependencies:
   flutter_test:
@@ -71,5 +76,28 @@ flutter:
     - assets/images/
     - assets/images/earth_texturejpg.png
 
-  # fonts:
-  # Using Google Fonts package instead - no need to download font files!
+  fonts:
+    - family: GuyotHeadline
+      fonts:
+        - asset: assets/fonts/fonnts.com-Guyot-Headline-Regular.otf
+          weight: 400
+        - asset: assets/fonts/fonnts.com-Guyot-Headline-Bold.otf
+          weight: 700
+        - asset: assets/fonts/fonnts.com-Guyot-Headline-Extra-Bold.otf
+          weight: 800
+
+    - family: GuyotPress
+      fonts:
+        - asset: assets/fonts/fonnts.com-Guyot-Press-Regular.otf
+          weight: 400
+        - asset: assets/fonts/fonnts.com-Guyot-Press-Bold.otf
+          weight: 700
+
+    - family: GuyotText
+      fonts:
+        - asset: assets/fonts/fonnts.com-Guyot-Text-Regular.otf
+          weight: 400
+        - asset: assets/fonts/fonnts.com-Guyot-Text-Bold.otf
+          weight: 700
+        - asset: assets/fonts/fonnts.com-Guyot-Text-Extra-Bold.otf
+          weight: 800

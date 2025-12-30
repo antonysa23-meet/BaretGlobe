@@ -16,11 +16,13 @@ class AppTheme {
       // Color scheme
       colorScheme: const ColorScheme.light(
         primary: AppColors.secondarySage, // Sage green as primary
-        secondary: AppColors.primaryBlue,
+        secondary: AppColors.accentGold, // Gold for accents/highlights
+        tertiary: AppColors.primaryBlue, // Blue for secondary CTAs
         surface: AppColors.white,
         error: AppColors.error,
         onPrimary: AppColors.white,
-        onSecondary: AppColors.white,
+        onSecondary: AppColors.black, // Dark text on gold
+        onTertiary: AppColors.white, // White text on blue
         onSurface: AppColors.black,
         onError: AppColors.white,
       ),
@@ -29,7 +31,7 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.white,
 
       // App bar theme
-      appBarTheme: AppBarTheme(
+      appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.white,
         foregroundColor: AppColors.black,
         elevation: 0,
@@ -40,15 +42,26 @@ class AppTheme {
 
       // Text theme
       textTheme: TextTheme(
-        displayLarge: AppTextStyles.h1,
-        displayMedium: AppTextStyles.h2,
-        displaySmall: AppTextStyles.h3,
-        headlineMedium: AppTextStyles.h4,
-        bodyLarge: AppTextStyles.bodyLarge,
-        bodyMedium: AppTextStyles.bodyMedium,
-        bodySmall: AppTextStyles.bodySmall,
-        labelLarge: AppTextStyles.button,
-        labelSmall: AppTextStyles.caption,
+        displayLarge: AppTextStyles.h1.copyWith(fontStyle: FontStyle.normal),
+        displayMedium: AppTextStyles.h2.copyWith(fontStyle: FontStyle.normal),
+        displaySmall: AppTextStyles.h3.copyWith(fontStyle: FontStyle.normal),
+        headlineMedium: AppTextStyles.h4.copyWith(fontStyle: FontStyle.normal),
+        headlineSmall: AppTextStyles.h4.copyWith(fontStyle: FontStyle.normal),
+        titleLarge: AppTextStyles.h4.copyWith(fontStyle: FontStyle.normal),
+        titleMedium:
+            AppTextStyles.bodyLarge.copyWith(fontStyle: FontStyle.normal),
+        titleSmall:
+            AppTextStyles.bodyMedium.copyWith(fontStyle: FontStyle.normal),
+        bodyLarge:
+            AppTextStyles.bodyLarge.copyWith(fontStyle: FontStyle.normal),
+        bodyMedium:
+            AppTextStyles.bodyMedium.copyWith(fontStyle: FontStyle.normal),
+        bodySmall:
+            AppTextStyles.bodySmall.copyWith(fontStyle: FontStyle.normal),
+        labelLarge: AppTextStyles.button.copyWith(fontStyle: FontStyle.normal),
+        labelMedium:
+            AppTextStyles.buttonSmall.copyWith(fontStyle: FontStyle.normal),
+        labelSmall: AppTextStyles.caption.copyWith(fontStyle: FontStyle.normal),
       ),
 
       // Button themes
@@ -99,56 +112,61 @@ class AppTheme {
       // Input decoration theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.softGray,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        fillColor: AppColors.neutralGray100, // Updated neutral
+        contentPadding: const EdgeInsets.symmetric(
+            horizontal: 24, vertical: 18), // Increased
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(25),
+          borderRadius: BorderRadius.circular(12), // Reduced from 25
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(25),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(25),
-          borderSide:
-              const BorderSide(color: AppColors.secondarySage, width: 2),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(
+              color: AppColors.accentGold, width: 2), // Gold focus
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(25),
+          borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.error, width: 2),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(25),
+          borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.error, width: 2),
         ),
         labelStyle: AppTextStyles.label,
-        hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.textGray),
+        hintStyle: AppTextStyles.bodyMedium.copyWith(
+          color: AppColors.textGray,
+          fontStyle: FontStyle.normal,
+        ),
       ),
 
       // Card theme
       cardTheme: CardThemeData(
         color: AppColors.white,
-        elevation: 2,
-        shadowColor: AppColors.black.withOpacity(0.1),
+        elevation: 1, // Reduced from 2 for softer shadows
+        shadowColor: AppColors.black.withOpacity(0.05), // Softer shadow
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20), // Increased from 16
         ),
-        margin: const EdgeInsets.all(8),
+        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
       ),
 
       // Bottom navigation bar theme
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: AppColors.white,
-        selectedItemColor: AppColors.secondarySage,
-        unselectedItemColor: AppColors.textGray,
+        selectedItemColor: AppColors.accentGold, // Changed to gold
+        unselectedItemColor: AppColors.neutralGray400, // Updated gray
         selectedLabelStyle: AppTextStyles.caption.copyWith(
           fontWeight: FontWeight.w600,
+          letterSpacing: 0.5,
+          fontStyle: FontStyle.normal,
         ),
         unselectedLabelStyle: AppTextStyles.caption,
         type: BottomNavigationBarType.fixed,
-        elevation: 8,
+        elevation: 4, // Reduced from 8
       ),
 
       // Dialog theme
@@ -156,10 +174,11 @@ class AppTheme {
         backgroundColor: AppColors.white,
         elevation: 8,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24), // Increased from 20
         ),
         titleTextStyle: AppTextStyles.h3,
         contentTextStyle: AppTextStyles.bodyMedium,
+        actionsPadding: const EdgeInsets.all(24),
       ),
 
       // Snackbar theme
@@ -167,6 +186,7 @@ class AppTheme {
         backgroundColor: AppColors.black,
         contentTextStyle: AppTextStyles.bodyMedium.copyWith(
           color: AppColors.white,
+          fontStyle: FontStyle.normal,
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
@@ -181,6 +201,7 @@ class AppTheme {
         labelStyle: AppTextStyles.bodySmall,
         secondaryLabelStyle: AppTextStyles.bodySmall.copyWith(
           color: AppColors.white,
+          fontStyle: FontStyle.normal,
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         shape: RoundedRectangleBorder(
@@ -190,7 +211,7 @@ class AppTheme {
 
       // Progress indicator
       progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppColors.secondarySage,
+        color: AppColors.accentGold, // Changed to gold
       ),
 
       // Divider theme
@@ -229,7 +250,10 @@ class AppTheme {
         elevation: 0,
         centerTitle: true,
         systemOverlayStyle: SystemUiOverlayStyle.light,
-        titleTextStyle: AppTextStyles.h3.copyWith(color: AppColors.white),
+        titleTextStyle: AppTextStyles.h3.copyWith(
+          color: AppColors.white,
+          fontStyle: FontStyle.normal,
+        ),
       ),
 
       // Buttons remain the same for consistency

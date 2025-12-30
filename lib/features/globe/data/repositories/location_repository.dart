@@ -297,4 +297,18 @@ class LocationRepository {
     if (response == null) return null;
     return DateTime.parse(response['created_at'] as String);
   }
+
+  /// Update only the country field for current location
+  ///
+  /// Used when GPS geocoding fails or returns N/A.
+  /// The database trigger will automatically handle country group membership changes.
+  Future<void> updateManualCountry({
+    required String alumnusId,
+    required String country,
+  }) async {
+    await _supabase.rpc('update_manual_country', params: {
+      'p_alumnus_id': alumnusId,
+      'p_country': country,
+    });
+  }
 }

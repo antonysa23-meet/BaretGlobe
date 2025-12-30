@@ -68,3 +68,18 @@ Future<bool> canCheckIn(CanCheckInRef ref, String alumnusId) async {
     return true;
   }
 }
+
+/// Provider for current user's location
+@riverpod
+Future<Location?> currentUserLocation(
+  CurrentUserLocationRef ref,
+  String alumnusId,
+) async {
+  final repository = ref.read(locationRepositoryProvider);
+  try {
+    return await repository.getCurrentLocation(alumnusId);
+  } catch (e) {
+    print('❌ GlobeProvider: Error fetching current user location - $e');
+    return null;
+  }
+}

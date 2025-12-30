@@ -9,6 +9,9 @@ class AppColors {
   /// Hex: #4582d8
   static const Color primaryBlue = Color(0xFF4582D8);
 
+  /// Primary color alias for consistency (defaults to primaryBlue)
+  static const Color primary = primaryBlue;
+
   /// Secondary sage/teal color - signature Baret color
   /// This should be prominent throughout the app
   /// Hex: #4d9c97
@@ -35,6 +38,31 @@ class AppColors {
 
   /// Success color (derived from sage green)
   static const Color success = Color(0xFF4CAF50);
+
+  /// Accent color for highlights, active states, CTAs
+  /// Hex: #6c977f
+  static const Color accentGold = Color(0xFF6C977F);
+
+  /// Light variant for hover states and tints
+  /// Hex: #8db09f
+  static const Color goldLight = Color(0xFF8DB09F);
+
+  /// Dark variant for pressed states
+  /// Hex: #5a7f6a
+  static const Color goldDark = Color(0xFF5A7F6A);
+
+  /// Neutral gray scale for better hierarchy
+  /// Very light gray - backgrounds
+  static const Color neutralGray100 = Color(0xFFF7F7F7);
+
+  /// Light gray - borders and dividers
+  static const Color neutralGray200 = Color(0xFFE8E8E8);
+
+  /// Medium-light gray - borders
+  static const Color neutralGray300 = Color(0xFFD0D0D0);
+
+  /// Medium gray - secondary text and icons
+  static const Color neutralGray400 = Color(0xFF9E9E9E);
 
   /// Semi-transparent black for overlays
   static const Color overlay = Color(0x80000000);

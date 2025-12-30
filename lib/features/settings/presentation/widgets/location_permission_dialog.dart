@@ -10,12 +10,12 @@ class LocationPermissionDialog {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Row(
           children: [
-            Icon(Icons.public, color: AppColors.secondarySage, size: 28),
-            const SizedBox(width: 12),
-            const Text('Share Your Location'),
+            Icon(Icons.public, color: AppColors.accentGold, size: 32),
+            SizedBox(width: 12),
+            Text('Share Your Location'),
           ],
         ),
         content: Column(
@@ -24,10 +24,11 @@ class LocationPermissionDialog {
           children: [
             Text(
               'Welcome to Baret Scholars Globe!',
-              style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+              style: AppTextStyles.bodyMedium
+                  .copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 12),
-            Text(
+            const Text(
               'See where alumni are around the world and let others see where you are.',
               style: AppTextStyles.bodyMedium,
             ),
@@ -48,17 +49,21 @@ class LocationPermissionDialog {
             ),
             const SizedBox(height: 16),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.softGray,
-                borderRadius: BorderRadius.circular(8),
+                color: AppColors.neutralGray100,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.neutralGray200,
+                  width: 1,
+                ),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.info_outline,
-                    size: 20,
+                    size: 22,
                     color: AppColors.primaryBlue,
                   ),
                   const SizedBox(width: 12),
@@ -78,20 +83,21 @@ class LocationPermissionDialog {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(
-              'Not Now',
-              style: TextStyle(color: AppColors.textGray),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.neutralGray400,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             ),
+            child: const Text('Not Now'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.secondarySage,
-              foregroundColor: AppColors.white,
+              backgroundColor: AppColors.accentGold,
+              foregroundColor: AppColors.black,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(40),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
             ),
             child: const Text('Enable Location'),
           ),

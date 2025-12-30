@@ -37,7 +37,8 @@ class _LocationTrackingToggleState
 
       try {
         // Check if location service is enabled
-        final serviceEnabled = await _locationService.isLocationServiceEnabled();
+        final serviceEnabled =
+            await _locationService.isLocationServiceEnabled();
         if (!serviceEnabled && mounted) {
           _showLocationServiceDialog();
           setState(() => _isLoading = false);
@@ -45,7 +46,8 @@ class _LocationTrackingToggleState
         }
 
         // Check permission
-        LocationPermission permission = await _locationService.checkPermission();
+        LocationPermission permission =
+            await _locationService.checkPermission();
 
         // Request if denied
         if (permission == LocationPermission.denied) {
@@ -73,7 +75,8 @@ class _LocationTrackingToggleState
             final shouldRequest = await _showBackgroundPermissionExplanation();
 
             if (shouldRequest && mounted) {
-              final backgroundPermission = await ph.Permission.locationAlways.request();
+              final backgroundPermission =
+                  await ph.Permission.locationAlways.request();
 
               if (!backgroundPermission.isGranted && mounted) {
                 // User can still use foreground tracking
@@ -263,7 +266,7 @@ class _LocationTrackingToggleState
         style: AppTextStyles.bodySmall.copyWith(color: AppColors.textGray),
       ),
       value: widget.enabled,
-      activeColor: AppColors.secondarySage,
+      activeThumbColor: AppColors.accentGold,
       onChanged: _isLoading ? null : _handleToggle,
       secondary: _isLoading
           ? const SizedBox(
@@ -273,7 +276,7 @@ class _LocationTrackingToggleState
             )
           : Icon(
               widget.enabled ? Icons.location_on : Icons.location_off,
-              color: widget.enabled ? AppColors.secondarySage : AppColors.textGray,
+              color: widget.enabled ? AppColors.accentGold : AppColors.textGray,
             ),
     );
   }

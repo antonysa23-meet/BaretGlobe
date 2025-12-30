@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_colors.dart';
 import '../widgets/coming_soon_widget.dart';
 
 /// Messaging screen placeholder
@@ -10,9 +9,20 @@ class MessagingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Messages'),
-        centerTitle: true,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(80),
+        child: AppBar(
+          title: Padding(
+            padding: const EdgeInsets.all(5),
+            child: Image.asset(
+              'assets/images/Baret.png',
+              height: 50,
+              fit: BoxFit.contain,
+            ),
+          ),
+          centerTitle: true,
+          toolbarHeight: 80,
+        ),
       ),
       body: const Center(
         child: ComingSoonWidget(

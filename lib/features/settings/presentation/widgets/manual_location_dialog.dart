@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/services/geocoding_service.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/countries.dart';
 import '../../data/repositories/settings_repository.dart';
+import 'country_selection_dialog.dart';
 
 /// Dialog for setting manual location override
 class ManualLocationDialog extends ConsumerStatefulWidget {
@@ -18,17 +20,15 @@ class ManualLocationDialog extends ConsumerStatefulWidget {
 }
 
 class _ManualLocationDialogState extends ConsumerState<ManualLocationDialog> {
-  final _latitudeController = TextEditingController();
-  final _longitudeController = TextEditingController();
   final _cityController = TextEditingController();
-  final _countryController = TextEditingController();
+  String? _selectedCountry;
   final _formKey = GlobalKey<FormState>();
 
   String? _selectedDuration = '1_day';
   bool _isLoading = false;
-  bool _isGeocodingLoading = false;
 
   final Map<String, Duration?> _durationOptions = {
+    '1_minute': const Duration(minutes: 1), // For testing
     '1_hour': const Duration(hours: 1),
     '1_day': const Duration(days: 1),
     '1_week': const Duration(days: 7),
@@ -37,6 +37,7 @@ class _ManualLocationDialogState extends ConsumerState<ManualLocationDialog> {
   };
 
   final Map<String, String> _durationLabels = {
+    '1_minute': '1 Minute (Testing)',
     '1_hour': '1 Hour',
     '1_day': '1 Day',
     '1_week': '1 Week',
@@ -46,59 +47,70 @@ class _ManualLocationDialogState extends ConsumerState<ManualLocationDialog> {
 
   @override
   void dispose() {
-    _latitudeController.dispose();
-    _longitudeController.dispose();
     _cityController.dispose();
-    _countryController.dispose();
     super.dispose();
   }
 
-  Future<void> _geocodeLocation() async {
-    if (_latitudeController.text.isEmpty ||
-        _longitudeController.text.isEmpty) {
+  void _showCountryPicker() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => CountrySelectionDialog(
+        currentCountry: _selectedCountry,
+        enableIpDetection: false, // No IP detection for manual location
+        onCountrySelected: (selectedCountry) {
+          setState(() {
+            _selectedCountry = selectedCountry;
+          });
+        },
+      ),
+    );
+  }
+
+  /// Normalize city name input
+  ///
+  /// - Trims whitespace
+  /// - Capitalizes first letter of each word
+  /// - Removes extra spaces
+  String _normalizeCity(String input) {
+    // Trim and remove extra spaces
+    final trimmed = input.trim().replaceAll(RegExp(r'\s+'), ' ');
+
+    if (trimmed.isEmpty) return trimmed;
+
+    // Capitalize first letter of each word
+    final words = trimmed.split(' ');
+    final capitalizedWords = words.map((word) {
+      if (word.isEmpty) return word;
+      return word[0].toUpperCase() + word.substring(1).toLowerCase();
+    });
+
+    return capitalizedWords.join(' ');
+  }
+
+  Future<void> _saveManualLocation() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    if (_selectedCountry == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please enter latitude and longitude first'),
+          content: Text('Please select a country'),
           backgroundColor: Colors.orange,
         ),
       );
       return;
     }
 
-    setState(() {
-      _isGeocodingLoading = true;
-    });
-
-    try {
-      final lat = double.parse(_latitudeController.text);
-      final lng = double.parse(_longitudeController.text);
-
-      final geocodingService = GeocodingService();
-      final city = await geocodingService.approximateToNearestCity(lat, lng);
-      final country = await geocodingService.getCountry(lat, lng);
-
-      setState(() {
-        _cityController.text = city ?? 'Unknown';
-        _countryController.text = country ?? 'to be determined';
-      });
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error geocoding: $error'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      setState(() {
-        _isGeocodingLoading = false;
-      });
-    }
-  }
-
-  Future<void> _saveManualLocation() async {
-    if (!_formKey.currentState!.validate()) {
+    // Validate that the country is in the official list
+    if (!Countries.isValid(_selectedCountry)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Invalid country: $_selectedCountry'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
 
@@ -110,12 +122,15 @@ class _ManualLocationDialogState extends ConsumerState<ManualLocationDialog> {
       final settingsRepo = SettingsRepository();
       final duration = _durationOptions[_selectedDuration];
 
+      // Normalize and standardize inputs
+      final normalizedCity = _normalizeCity(_cityController.text);
+      final standardizedCountry =
+          Countries.standardize(_selectedCountry!) ?? _selectedCountry!;
+
       await settingsRepo.setManualLocation(
         alumnusId: widget.alumnusId,
-        latitude: double.parse(_latitudeController.text),
-        longitude: double.parse(_longitudeController.text),
-        city: _cityController.text,
-        country: _countryController.text,
+        city: normalizedCity,
+        country: standardizedCountry,
         duration: duration,
       );
 
@@ -151,9 +166,10 @@ class _ManualLocationDialogState extends ConsumerState<ManualLocationDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(32.0),
           child: Form(
             key: _formKey,
             child: Column(
@@ -166,78 +182,31 @@ class _ManualLocationDialogState extends ConsumerState<ManualLocationDialog> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Your location will be set to this position instead of GPS tracking',
+                  'Your location will be set to this city instead of GPS tracking',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Colors.grey[600],
                       ),
                 ),
                 const SizedBox(height: 24),
 
-                // Latitude
-                TextFormField(
-                  controller: _latitudeController,
-                  decoration: const InputDecoration(
-                    labelText: 'Latitude',
-                    hintText: 'e.g., 31.7683',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                    signed: true,
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter latitude';
-                    }
-                    final lat = double.tryParse(value);
-                    if (lat == null || lat < -90 || lat > 90) {
-                      return 'Invalid latitude (-90 to 90)';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Longitude
-                TextFormField(
-                  controller: _longitudeController,
-                  decoration: const InputDecoration(
-                    labelText: 'Longitude',
-                    hintText: 'e.g., 35.2137',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                    signed: true,
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter longitude';
-                    }
-                    final lng = double.tryParse(value);
-                    if (lng == null || lng < -180 || lng > 180) {
-                      return 'Invalid longitude (-180 to 180)';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Geocode button
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: _isGeocodingLoading ? null : _geocodeLocation,
-                    icon: _isGeocodingLoading
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.search),
-                    label: Text(_isGeocodingLoading
-                        ? 'Finding city...'
-                        : 'Find city from coordinates'),
+                // Country selector
+                InkWell(
+                  onTap: _showCountryPicker,
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'Country',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.public),
+                      suffixIcon: Icon(Icons.arrow_drop_down),
+                    ),
+                    child: Text(
+                      _selectedCountry ?? 'Select a country',
+                      style: TextStyle(
+                        color: _selectedCountry != null
+                            ? AppColors.black
+                            : Colors.grey[600],
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -249,27 +218,11 @@ class _ManualLocationDialogState extends ConsumerState<ManualLocationDialog> {
                     labelText: 'City',
                     hintText: 'e.g., Jerusalem',
                     border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.location_city),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter city';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Country
-                TextFormField(
-                  controller: _countryController,
-                  decoration: const InputDecoration(
-                    labelText: 'Country',
-                    hintText: 'e.g., Israel',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter country';
                     }
                     return null;
                   },
@@ -308,15 +261,29 @@ class _ManualLocationDialogState extends ConsumerState<ManualLocationDialog> {
                       child: const Text('Cancel'),
                     ),
                     const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: _isLoading ? null : _saveManualLocation,
-                      child: _isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Set Location'),
+                    Flexible(
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _saveManualLocation,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.accentGold,
+                          foregroundColor: AppColors.black,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      AppColors.black),
+                                ),
+                              )
+                            : const Text('Set Location'),
+                      ),
                     ),
                   ],
                 ),

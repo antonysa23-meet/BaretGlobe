@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 /// Typography styles matching Baret Scholars brand
-/// Reference: Founders Grotesk Condensed from website
-/// Flutter alternative: Roboto Condensed
+/// Using Guyot Headline font
 class AppTextStyles {
   AppTextStyles._(); // Private constructor
 
-  /// Base font family - Roboto Condensed (similar to Founders Grotesk Condensed)
-  static const String _fontFamily = 'RobotoCondensed';
+  /// Base font family - Guyot Headline
+  static const String _fontFamily = 'GuyotHeadline';
 
   /// Letter spacing for buttons (from website: 2.2px)
   static const double buttonLetterSpacing = 2.2;
@@ -19,33 +17,41 @@ class AppTextStyles {
   // ==================
 
   /// H1 - Large headings
-  static TextStyle h1 = GoogleFonts.robotoCondensed(
+  static const TextStyle h1 = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 48,
     fontWeight: FontWeight.bold,
+    fontStyle: FontStyle.normal,
     color: AppColors.black,
     height: 1.2,
   );
 
   /// H2 - Section headings
-  static TextStyle h2 = GoogleFonts.robotoCondensed(
+  static const TextStyle h2 = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 36,
     fontWeight: FontWeight.bold,
+    fontStyle: FontStyle.normal,
     color: AppColors.black,
     height: 1.3,
   );
 
   /// H3 - Subsection headings
-  static TextStyle h3 = GoogleFonts.robotoCondensed(
+  static const TextStyle h3 = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 28,
     fontWeight: FontWeight.w600,
+    fontStyle: FontStyle.normal,
     color: AppColors.black,
     height: 1.4,
   );
 
   /// H4 - Card titles
-  static TextStyle h4 = GoogleFonts.robotoCondensed(
+  static const TextStyle h4 = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 22,
     fontWeight: FontWeight.w600,
+    fontStyle: FontStyle.normal,
     color: AppColors.black,
     height: 1.4,
   );
@@ -55,25 +61,31 @@ class AppTextStyles {
   // ==================
 
   /// Body Large - Primary body text
-  static TextStyle bodyLarge = GoogleFonts.robotoCondensed(
+  static const TextStyle bodyLarge = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 18,
     fontWeight: FontWeight.normal,
+    fontStyle: FontStyle.normal,
     color: AppColors.black,
     height: 1.6,
   );
 
   /// Body Medium - Secondary body text
-  static TextStyle bodyMedium = GoogleFonts.robotoCondensed(
+  static const TextStyle bodyMedium = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 16,
     fontWeight: FontWeight.normal,
+    fontStyle: FontStyle.normal,
     color: AppColors.black,
     height: 1.5,
   );
 
   /// Body Small - Tertiary body text
-  static TextStyle bodySmall = GoogleFonts.robotoCondensed(
+  static const TextStyle bodySmall = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 14,
     fontWeight: FontWeight.normal,
+    fontStyle: FontStyle.normal,
     color: AppColors.textGray,
     height: 1.5,
   );
@@ -83,17 +95,21 @@ class AppTextStyles {
   // ==================
 
   /// Button text - with characteristic letter spacing
-  static TextStyle button = GoogleFonts.robotoCondensed(
+  static const TextStyle button = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 16,
     fontWeight: FontWeight.w600,
+    fontStyle: FontStyle.normal,
     letterSpacing: buttonLetterSpacing,
     color: AppColors.white,
   );
 
   /// Button text small
-  static TextStyle buttonSmall = GoogleFonts.robotoCondensed(
+  static const TextStyle buttonSmall = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 14,
     fontWeight: FontWeight.w600,
+    fontStyle: FontStyle.normal,
     letterSpacing: buttonLetterSpacing,
     color: AppColors.white,
   );
@@ -103,25 +119,31 @@ class AppTextStyles {
   // ==================
 
   /// Caption - Small annotations
-  static TextStyle caption = GoogleFonts.robotoCondensed(
+  static const TextStyle caption = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 12,
     fontWeight: FontWeight.normal,
+    fontStyle: FontStyle.normal,
     color: AppColors.textGray,
     height: 1.4,
   );
 
   /// Label - Input labels
-  static TextStyle label = GoogleFonts.robotoCondensed(
+  static const TextStyle label = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 14,
     fontWeight: FontWeight.w500,
+    fontStyle: FontStyle.normal,
     color: AppColors.textGray,
     height: 1.4,
   );
 
   /// Overline - Small uppercase text
-  static TextStyle overline = GoogleFonts.robotoCondensed(
+  static const TextStyle overline = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 12,
     fontWeight: FontWeight.w600,
+    fontStyle: FontStyle.normal,
     letterSpacing: 1.5,
     color: AppColors.textGray,
   );
@@ -131,25 +153,31 @@ class AppTextStyles {
   // ==================
 
   /// Alumni name on marker popup
-  static TextStyle alumniName = GoogleFonts.robotoCondensed(
+  static const TextStyle alumniName = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 20,
     fontWeight: FontWeight.bold,
+    fontStyle: FontStyle.normal,
     color: AppColors.white,
     height: 1.3,
   );
 
   /// Location text on marker popup
-  static TextStyle locationText = GoogleFonts.robotoCondensed(
+  static const TextStyle locationText = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 14,
     fontWeight: FontWeight.normal,
+    fontStyle: FontStyle.normal,
     color: AppColors.white,
     height: 1.4,
   );
 
   /// Cohort badge text
-  static TextStyle cohortBadge = GoogleFonts.robotoCondensed(
+  static const TextStyle cohortBadge = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 12,
     fontWeight: FontWeight.bold,
+    fontStyle: FontStyle.normal,
     letterSpacing: 1.2,
     color: AppColors.white,
   );

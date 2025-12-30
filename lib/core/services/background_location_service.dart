@@ -11,6 +11,7 @@ import 'geocoding_service.dart';
 
 /// Service for managing background location tracking
 /// Uses flutter_background_service for continuous background updates
+@pragma('vm:entry-point')
 class BackgroundLocationService {
   static const String taskName = 'location_tracking';
   static const int updateIntervalMinutes = 30; // Update every 30 minutes
@@ -209,6 +210,35 @@ class BackgroundLocationService {
       // Update location in Supabase
       final supabase = Supabase.instance.client;
 
+      // Smart N/A handling: Don't overwrite valid country with N/A
+      final bool isInvalidCountry = country == null ||
+          country == 'N/A' ||
+          country == 'Unknown' ||
+          country.isEmpty;
+
+      String finalCountry = country ?? 'Unknown';
+
+      if (isInvalidCountry) {
+        // Get current location to check if it has a valid country
+        final currentLocationResponse = await supabase
+            .from('locations')
+            .select('country')
+            .eq('alumnus_id', alumnusId)
+            .eq('is_current', true)
+            .maybeSingle();
+
+        if (currentLocationResponse != null) {
+          final currentCountry = currentLocationResponse['country'] as String?;
+          if (currentCountry != null &&
+              currentCountry != 'N/A' &&
+              currentCountry != 'Unknown' &&
+              currentCountry.isNotEmpty) {
+            debugPrint('⏸️ BackgroundLocationService: Skipping N/A country update - keeping current: $currentCountry');
+            finalCountry = currentCountry; // Keep the valid country
+          }
+        }
+      }
+
       // Call the update_current_location function
       await supabase.rpc(
         'update_current_location',
@@ -217,9 +247,11 @@ class BackgroundLocationService {
           'p_latitude': position.latitude,
           'p_longitude': position.longitude,
           'p_city': city,
-          'p_country': country ?? 'Unknown',
+          'p_country': finalCountry,
           'p_location_type': 'background',
-          'p_notes': 'Automatic background update',
+          'p_notes': isInvalidCountry && finalCountry != country
+              ? 'Automatic background update (country preserved)'
+              : 'Automatic background update',
         },
       );
 

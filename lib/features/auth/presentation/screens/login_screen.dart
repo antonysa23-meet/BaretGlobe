@@ -19,61 +19,82 @@ class LoginScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Logo/Branding
-              const Icon(
-                Icons.public,
-                size: 100,
-                color: AppColors.secondarySage,
+              Image.asset(
+                'assets/images/Baret.png',
+                height: 100,
+                fit: BoxFit.contain,
               ),
               const SizedBox(height: 24),
 
-              // App name
-              const Text(
-                'Baret Scholars Globe',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primaryBlue,
-                ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 1,
+                    color: AppColors.accentGold,
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'GLOBAL',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.accentGold,
+                      letterSpacing: 3.0,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Container(
+                    width: 40,
+                    height: 1,
+                    color: AppColors.accentGold,
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
 
               // Tagline
               const Text(
-                'Connect with alumni worldwide',
+                'Connect with the Baret alumni worldwide',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,
                   color: AppColors.textGray,
                 ),
               ),
-              const SizedBox(height: 48),
+              const SizedBox(height: 64),
 
               // Email requirement notice
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: AppColors.softGray,
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppColors.neutralGray100,
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AppColors.secondarySage.withOpacity(0.3),
+                    color: AppColors.accentGold.withOpacity(0.4),
+                    width: 2,
                   ),
                 ),
-                child: const Column(
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
                       Icons.info_outline,
-                      color: AppColors.secondarySage,
+                      color: AppColors.accentGold,
                       size: 24,
                     ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Sign in with your @baretscholars.org email',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.black,
+                    SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        'Make sure to sign in with your Baret email',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.black,
+                        ),
                       ),
                     ),
                   ],

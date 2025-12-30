@@ -36,6 +36,12 @@ class ApiConstants {
   static const String locationsTable = 'locations';
   static const String locationHistoryTable = 'location_history';
 
+  // Messaging tables
+  static const String conversationsTable = 'conversations';
+  static const String conversationMembersTable = 'conversation_members';
+  static const String messagesTable = 'messages';
+  static const String messageReadReceiptsTable = 'message_read_receipts';
+
   // ==================
   // FUNCTIONS
   // ==================
@@ -43,6 +49,12 @@ class ApiConstants {
   static const String getCurrentLocationsFunction = 'get_current_alumni_locations';
   static const String updateLocationFunction = 'update_alumnus_location';
   static const String canCheckInFunction = 'can_check_in';
+
+  // Messaging functions
+  static const String getOrCreateDirectConversationFunction = 'get_or_create_direct_conversation';
+  static const String getUserConversationsFunction = 'get_user_conversations';
+  static const String getUnreadCountFunction = 'get_unread_count';
+  static const String getTotalUnreadCountFunction = 'get_total_unread_count';
 
   // ==================
   // RATE LIMITING
